@@ -1,6 +1,6 @@
-.PHONY: build test docker help stage release clean
+.PHONY: build test docker help stage release clean run-tests
 ifndef VERBOSE
-.SILENT: build test docker help stage release clean
+.SILENT: build test docker help stage release clean run-tests
 endif
 
 all: help
@@ -104,3 +104,6 @@ clean: docker
 	build/build_jupyteruser.sh clean images/singularity && \
 	build/build_jupyteruser.sh clean images/sd2e && \
 	build/build_jupyteruser.sh clean images/base
+
+run-tests:
+	$(MAKE) -C test/sharness
