@@ -1,7 +1,7 @@
 #Image: sd2e/jupyteruser-sd2e
-#Version: 0.3.6
+#Version: 0.3.7
 
-FROM sd2e/jupyteruser-base:0.2.4
+FROM taccsciapps/jupyteruser-base:1.1.0
 
 # Convenience variable
 ARG CONDA_ARGS="--quiet --no-update-deps --yes"
@@ -11,6 +11,50 @@ USER root
 ARG image_version=development
 RUN echo "${image_version}" > /etc/sd2e_jupyteruser-sd2e-release && \
 	chmod a+r /etc/sd2e_jupyteruser-sd2e-release
+
+##########################################
+# SD2E-specific Environment variables
+##########################################
+RUN echo "\n\nexport SD2_DATA=/home/jupyter/sd2e-community\n\
+export PROJECTS_DATA=/home/jupyter/sd2e-projects\n\
+export PARTNERS_DATA=/home/jupyter/sd2e-partners" >> /home/jupyter/.bashrc
+
+###############################################
+# Affiliated projects
+###############################################
+ADD src/add-sd2e-groups.sh /tmp/add-sd2e-groups.sh
+RUN bash /tmp/add-sd2e-groups.sh && docker-clean
+
+##########################################
+# Readme
+##########################################
+ADD docs/SD2E_README.ipynb /home/jupyter/SD2E_README.ipynb
+
+##########################################
+# Agave tools
+##########################################
+# SD2E CLI
+ADD src/configuration.rc configuration.rc
+RUN git clone https://github.com/SD2E/sd2e-cli.git && \
+	mv configuration.rc sd2e-cli/ && cd sd2e-cli && \
+	git submodule update --init --recursive && \
+	make && make install && \
+	cd ../ && rm -rf sd2e-cli && \
+	mv ${HOME}/sd2e-cloud-cli /opt/cli && \
+	chmod -R a+rX /opt/cli && chmod -R a+x /opt/cli/bin && \
+	docker-clean
+# Enable sd2nb sharing service
+RUN cd /root && \
+	git clone https://github.com/SD2E/sd2nb-app.git && \
+	( cd sd2nb-app && make && make install ) && \
+	rm -rf sd2nb-app && \
+	docker-clean
+# Enable sd2e-jupyter
+RUN cd /root && \
+	git clone https://github.com/SD2E/sd2e-jupyter-ascending.git && \
+	( cd sd2e-jupyter-ascending && make && make install ) && \
+	rm -rf sd2e-jupyter-ascending && \
+	docker-clean
 
 ##########################################
 # igraph and networkx
@@ -129,13 +173,6 @@ RUN cd examples && \
 	cd deep-learning-keras-tensorflow && rm -rf .git
 # Necessary for theano
 ENV MKL_THREADING_LAYER=GNU
-
-###############################################
-# Install Jupyterlab
-###############################################
-RUN conda install -c conda-forge 'jupyterlab=0.34.12' && \
-    jupyter labextension install @jupyterlab/hub-extension && \
-    docker-clean
 
 ###############################################
 # Permissions
