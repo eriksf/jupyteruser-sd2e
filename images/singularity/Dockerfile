@@ -1,7 +1,7 @@
 #Image: sd2e/jupyteruser-singularity
-#Version: 0.1.1
+#Version: 0.1.2
 
-FROM sd2e/jupyteruser-sd2e:0.3.6
+FROM sd2e/jupyteruser-sd2e:0.3.7
 
 # Image release
 USER root
