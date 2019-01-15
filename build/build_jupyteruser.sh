@@ -103,6 +103,19 @@ function testImage {
 	fi
 }
 
+function runTests {
+	# Builds an image
+	fileExists $1/Dockerfile
+	BASE=$(PWD)
+	cd $1
+	IMG=$(getVal Image:)
+	VERSION=$(getVal Version:)
+	cd $BASE
+	echo ""
+	ed "docker run --rm -t -v ${BASE}/test/sharness:/test -v ${HOME}/.agave:/home/jupyter/.agave -w /test ${IMG}:${VERSION} /test/run-tests.sh"
+	docker run --rm -t -v ${BASE}/test/sharness:/test -v ${HOME}/.agave:/home/jupyter/.agave -w /test ${IMG}:${VERSION} /test/run-tests.sh
+}
+
 function cleanImage {
 	# Builds an image
 	fileExists $1/Dockerfile
@@ -178,6 +191,9 @@ release)
 clean)
 	cleanImage $2 2> /dev/null
 	exit 0
+	;;
+run-tests)
+	runTests $2
 	;;
 *)
 	ee $helpStr

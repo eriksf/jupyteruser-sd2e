@@ -11,13 +11,13 @@ help:
 
 	echo "\nUsage: make [action] [target]\n" && \
 	echo "Actions:" && \
-	echo " - build   - build docker images locally" && \
-	echo " - test    - test images locally" && \
-	echo " - stage   - push images to staging environment" && \
-	echo " - release - push images to production environment\n" && \
+	echo " - build     - build docker images locally" && \
+	echo " - test      - test images locally" && \
+	echo " - stage     - push images to staging environment" && \
+	echo " - release   - push images to production environment" && \
+	echo " - run-tests - run automated tests in container\n" && \
 	echo "Targets:" && \
-	echo " - base - Recipe in images/base" && \
-	echo " - sd2e - Recipe in images/sd2e which is where all community software should belong" && \
+	echo " - sd2e        - Recipe in images/sd2e which is where all community software should belong" && \
 	echo " - singularity - Image for running on TACC HPC\n"
 
 # Make sure image targets are not used as make targets
@@ -105,5 +105,16 @@ clean: docker
 	build/build_jupyteruser.sh clean images/sd2e && \
 	build/build_jupyteruser.sh clean images/base
 
-run-tests:
-	$(MAKE) -C test/sharness
+run-tests: docker
+	TARGET=$(filter-out $@,$(MAKECMDGOALS)) && \
+	case $$TARGET in \
+	sd2e) \
+		build/build_jupyteruser.sh run-tests images/sd2e; \
+		;; \
+	singularity) \
+		build/build_jupyteruser.sh run-tests images/singularity; \
+		;; \
+	*) \
+		$(MAKE) help; \
+		;; \
+	esac
